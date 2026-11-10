@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Analysis;
+use App\Services\ImageStore;
 use App\Services\PadiClassifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,35 +26,27 @@ class DetectionController extends Controller
         return view('detect');
     }
 
-    public function store(Request $request, PadiClassifier $classifier)
+    public function store(Request $request, PadiClassifier $classifier, ImageStore $images)
     {
+        $maxMb = intdiv((int) config('padi.max_upload_kb'), 1024);
+
         $request->validate([
-            'foto' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
+            'foto' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:'.config('padi.max_upload_kb')],
         ], [
             'foto.required' => 'Silakan pilih foto daun padi terlebih dahulu.',
             'foto.file'     => 'Berkas yang diunggah tidak valid.',
             'foto.image'    => 'Berkas harus berupa gambar.',
             'foto.mimes'    => 'Format foto harus JPG, PNG, atau WEBP.',
-            'foto.max'      => 'Ukuran foto maksimal 8 MB.',
-            'foto.uploaded' => 'Unggahan gagal. Periksa ukuran foto (maks. 8 MB) lalu coba lagi.',
+            'foto.max'      => "Ukuran foto maksimal {$maxMb} MB.",
+            'foto.uploaded' => "Unggahan gagal. Periksa ukuran foto (maks. {$maxMb} MB) lalu coba lagi.",
         ]);
 
         $file = $request->file('foto');
-        $dir  = public_path('uploads/analisis');
-
-        if (! is_dir($dir)) {
-            mkdir($dir, 0775, true);
-        }
-
-        $original = $file->getClientOriginalName();
-        $name     = Str::uuid()->toString().'.'.($file->guessExtension() ?: 'jpg');
-        $file->move($dir, $name);
-        $fullPath = $dir.DIRECTORY_SEPARATOR.$name;
+        $name = Str::uuid()->toString().'.'.($file->guessExtension() ?: 'jpg');
 
         try {
-            $result = $classifier->predict($fullPath);
+            $result = $classifier->predict($file->getRealPath());
         } catch (Throwable $e) {
-            @unlink($fullPath);
             report($e);
 
             return back()->withErrors(['foto' => 'Analisis gagal: '.$e->getMessage()]);
@@ -62,8 +55,6 @@ class DetectionController extends Controller
         $status = $result['status'] ?? 'ok';
 
         if ($status === 'not_leaf') {
-            @unlink($fullPath);
-
             return back()->with('unknown', $result['reason'] ?? 'color');
         }
 
@@ -74,6 +65,14 @@ class DetectionController extends Controller
                 'confidence'    => 0,
                 'probabilities' => $result['metrics'] ?? [],
             ];
+        }
+
+        try {
+            $images->put($file->getRealPath(), $name, $file->getMimeType() ?: 'image/jpeg');
+        } catch (Throwable $e) {
+            report($e);
+
+            return back()->withErrors(['foto' => 'Foto gagal disimpan: '.$e->getMessage()]);
         }
 
         $analysis = Analysis::create([
@@ -118,11 +117,9 @@ class DetectionController extends Controller
         return view('history', compact('analyses', 'diseases', 'filter', 'counts'));
     }
 
-    public function destroy(Analysis $analysis)
+    public function destroy(Analysis $analysis, ImageStore $images)
     {
-        if (is_file($analysis->image_path)) {
-            @unlink($analysis->image_path);
-        }
+        $images->delete($analysis->image);
         $analysis->delete();
 
         return redirect()->route('riwayat')->with('status', 'Riwayat analisis berhasil dihapus.');

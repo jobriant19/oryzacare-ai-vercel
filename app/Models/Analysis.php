@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ImageStore;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
@@ -23,7 +24,7 @@ class Analysis extends Model
 
     public function getImageUrlAttribute(): string
     {
-        return asset('uploads/analisis/'.$this->image);
+        return app(ImageStore::class)->url($this->image);
     }
 
     public function getImagePathAttribute(): string

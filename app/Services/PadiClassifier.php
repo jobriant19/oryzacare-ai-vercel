@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Process;
 use RuntimeException;
 use Throwable;
@@ -13,6 +14,24 @@ class PadiClassifier
      * ['label' => string, 'confidence' => float, 'probabilities' => array]
      */
     public function predict(string $imagePath): array
+    {
+        $data = config('padi.classifier_url')
+            ? $this->viaApi($imagePath)
+            : $this->viaPython($imagePath);
+
+        if (isset($data['error'])) {
+            throw new RuntimeException($data['error']);
+        }
+
+        if (! isset($data['label'], $data['confidence'], $data['probabilities'])) {
+            throw new RuntimeException('Format hasil prediksi tidak dikenali.');
+        }
+
+        return $data;
+    }
+
+    /** Lokal (Laragon): jalankan python/predict.py lewat proses. */
+    private function viaPython(string $imagePath): array
     {
         try {
             $result = Process::timeout((int) config('padi.timeout'))
@@ -36,12 +55,25 @@ class PadiClassifier
             throw new RuntimeException('Proses prediksi gagal: '.mb_substr($detail, 0, 300));
         }
 
-        if (isset($data['error'])) {
-            throw new RuntimeException($data['error']);
+        return $data;
+    }
+
+    /** Production (Vercel): kirim byte gambar ke fungsi Python (proyek Vercel terpisah). */
+    private function viaApi(string $imagePath): array
+    {
+        try {
+            $response = Http::timeout((int) config('padi.timeout'))
+                ->withHeaders(['X-Api-Token' => (string) config('padi.classifier_token')])
+                ->withBody(file_get_contents($imagePath), 'application/octet-stream')
+                ->post(config('padi.classifier_url'));
+        } catch (Throwable $e) {
+            throw new RuntimeException('Layanan prediksi tidak dapat dihubungi. ('.$e->getMessage().')');
         }
 
-        if (! isset($data['label'], $data['confidence'], $data['probabilities'])) {
-            throw new RuntimeException('Format hasil prediksi tidak dikenali.');
+        $data = $response->json();
+
+        if (! is_array($data)) {
+            throw new RuntimeException('Proses prediksi gagal: respons tidak valid (HTTP '.$response->status().').');
         }
 
         return $data;

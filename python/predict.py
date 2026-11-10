@@ -106,9 +106,17 @@ def main():
     if not os.path.isfile(path_model):
         keluar({"error": "File model tidak ditemukan: " + path_model}, 1)
 
+    try:
+        keluar(analisis(path_gambar, path_model))
+    except ValueError as e:
+        keluar({"error": str(e)}, 1)
+
+
+def analisis(path_gambar, path_model):
+    """Jalankan penyaring + model. Melempar ValueError jika gambar tidak terbaca."""
     gambar = cv2.imread(path_gambar)
     if gambar is None:
-        keluar({"error": "Gambar tidak dapat dibaca. Gunakan JPG, PNG, atau WEBP yang valid."}, 1)
+        raise ValueError("Gambar tidak dapat dibaca. Gunakan JPG, PNG, atau WEBP yang valid.")
 
     color = color_metrics(gambar)
     graphic = graphic_metrics(path_gambar, gambar)
@@ -135,14 +143,14 @@ def main():
     else:
         status, reason = judge(color, graphic)
 
-    keluar({
+    return {
         "status": status,
         "reason": reason,
         "label": label,
         "confidence": round(float(proba[idx]) * 100, 2),
         "probabilities": {k: round(float(p) * 100, 2) for k, p in zip(kelas, proba)},
         "metrics": {**color, **graphic},
-    })
+    }
 
 
 if __name__ == "__main__":

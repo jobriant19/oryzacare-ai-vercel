@@ -8,6 +8,13 @@ return [
     'model'   => base_path('python/model_random_forest.pkl'),
     'timeout' => 90,
 
+    // Production (Vercel): panggil fungsi Python lewat HTTP. Kosongkan untuk menjalankan python lokal.
+    'classifier_url'   => env('CLASSIFIER_URL'),
+    'classifier_token' => env('CLASSIFIER_TOKEN'),
+
+    // Batas unggahan (KB). Vercel membatasi body request 4,5 MB.
+    'max_upload_kb' => 4096,
+
     // Di bawah nilai ini (persen) hasil diberi peringatan "keyakinan rendah".
     'low_confidence'  => 60,
     'high_confidence' => 85,

@@ -21,7 +21,7 @@
   var modalTitle = document.getElementById('fileModalTitle');
   var modalText = document.getElementById('fileModalText');
   var modalOk = document.getElementById('fileModalOk');
-  var MAX = 8 * 1024 * 1024;
+  var MAX = 4 * 1024 * 1024;
   var OK = ['image/jpeg', 'image/png', 'image/webp'];
   var objectUrl = null;
   var current = null;   // foto valid yang sedang dipilih
@@ -91,7 +91,7 @@
       return;
     }
     if (file.size > MAX) {
-      reject('Ukuran foto terlalu besar', 'Foto "' + file.name + '" berukuran ' + mb(file.size) + ' MB, melebihi batas 8 MB. Kecilkan ukuran foto atau pilih foto lain.');
+      reject('Ukuran foto terlalu besar', 'Foto "' + file.name + '" berukuran ' + mb(file.size) + ' MB, melebihi batas 4 MB. Kecilkan ukuran foto atau pilih foto lain.');
       return;
     }
 

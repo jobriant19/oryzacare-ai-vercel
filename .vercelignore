@@ -1,0 +1,11 @@
+/vendor
+/node_modules
+/python
+/training
+/tests
+/public/uploads
+/public/build
+/storage/logs
+/storage/framework
+/oryzacare_ai.sql
+.env

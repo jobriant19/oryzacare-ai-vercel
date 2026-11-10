@@ -6,9 +6,9 @@
             'icon'  => '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
             'dur'   => 8,
             'title' => 'Unggah foto daun padi',
-            'desc'  => 'Pilih foto dari galeri atau ambil langsung dari kamera HP. Format JPG, PNG, dan WEBP hingga 8 MB diterima.',
+            'desc'  => 'Pilih foto dari galeri atau ambil langsung dari kamera HP. Format JPG, PNG, dan WEBP hingga 4 MB diterima.',
             'list'  => ['Seret dan lepas foto ke area unggah', 'Pratinjau tampil sebelum dianalisis', 'Foto dekat, terang, dan berlatar polos memberi hasil terbaik'],
-            'stats' => [['3', 'format foto'], ['8 MB', 'ukuran maksimal'], ['1', 'foto per analisis']],
+            'stats' => [['3', 'format foto'], ['4 MB', 'ukuran maksimal'], ['1', 'foto per analisis']],
         ],
         [
             'name'  => 'Analisis otomatis',
