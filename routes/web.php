@@ -5,6 +5,7 @@ use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\StatsController;
 use App\Http\Middleware\TrackVisitor;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
@@ -22,5 +23,5 @@ Route::middleware(TrackVisitor::class)->group(function () {
 // Foto dari database: tanpa session/cookie agar bisa di-cache CDN dan tidak dihitung sebagai kunjungan.
 Route::get('/foto/{name}', PhotoController::class)
     ->where('name', '[A-Za-z0-9\-]+\.[a-z]+')
-    ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, AddQueuedCookiesToResponse::class])
+    ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class, AddQueuedCookiesToResponse::class, PreventRequestForgery::class])
     ->name('foto');
